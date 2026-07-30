@@ -457,3 +457,233 @@ function addCatalogItemToDevis(itemId) {
     document.getElementById('tile-cat-modal').style.display = 'none';
   }
 }
+
+
+
+// ==========================================================================
+// BTP QUOTE AUDIT & COMPARATOR LOGIC ENGINE
+// ==========================================================================
+
+function switchAuditTab(tabName) {
+  const bAudit = document.getElementById('tab-btn-audit');
+  const bComp = document.getElementById('tab-btn-compare');
+  const cAudit = document.getElementById('tab-content-audit');
+  const cComp = document.getElementById('tab-content-compare');
+
+  if (bAudit) bAudit.classList.remove('active');
+  if (bComp) bComp.classList.remove('active');
+
+  if (tabName === 'audit') {
+    if (bAudit) bAudit.classList.add('active');
+    if (cAudit) cAudit.style.display = 'block';
+    if (cComp) cComp.style.display = 'none';
+  } else {
+    if (bComp) bComp.classList.add('active');
+    if (cAudit) cAudit.style.display = 'none';
+    if (cComp) cComp.style.display = 'block';
+  }
+}
+
+function runQuoteAudit() {
+  const container = document.getElementById('audit-results-container');
+  if (!container) return;
+
+  let score = 100;
+  const issues = [];
+  const passes = [];
+  const omissions = [];
+
+  let subtotal = 0;
+  const items = window.activeItems || [];
+  
+  items.forEach(item => {
+    subtotal += (item.qty * item.price);
+  });
+
+  if (items.length === 0) {
+    container.innerHTML = `
+      <div class="p-3 rounded card-bg-subtle text-amber text-center">
+        <i class="fa-solid fa-triangle-exclamation"></i> Votre devis ne contient aucune ligne de prestation. Ajoutez des éléments pour lancer l'analyse.
+      </div>`;
+    return;
+  }
+
+  // Check Unit Prices
+  items.forEach((item) => {
+    const desc = (item.desc || '').toLowerCase();
+    
+    if (item.price < 15 && item.unit !== 'mètre') {
+      score -= 10;
+      issues.push({
+        type: 'danger',
+        title: `Sous-chiffrage potentiel : "${item.desc}" (${item.price}€)`,
+        detail: `Le tarif unitaire de ${item.price}€ est bas. Risque de perte de marge sur la main-d'œuvre.`
+      });
+    }
+    
+    if (item.price > 130 && !desc.includes('forfait') && !desc.includes('bâti') && !desc.includes('meuble')) {
+      issues.push({
+        type: 'warning',
+        title: `Tarif haut de gamme : "${item.desc}" (${item.price}€)`,
+        detail: `Tarif supérieur à la moyenne. Précisez la marque et la haute qualité au client.`
+      });
+    }
+  });
+
+  // Check Technical Omissions
+  const fullText = items.map(i => (i.desc || '').toLowerCase()).join(' ');
+  
+  if (!fullText.includes('ragréage') && !fullText.includes('chape') && !fullText.includes('support') && !fullText.includes('enduit')) {
+    score -= 15;
+    omissions.push('Préparation des supports (Ragréage autolissant / Chape / Primaires) non mentionnée.');
+  }
+
+  if (fullText.includes('douche') || fullText.includes('bain') || fullText.includes('eau') || fullText.includes('sdb')) {
+    if (!fullText.includes('spec') && !fullText.includes('étanchéité')) {
+      score -= 15;
+      omissions.push('Système d'étanchéité SPEC (Obligatoire DTU en pièces humides) non mentionné !');
+    }
+  }
+
+  if (!fullText.includes('joint')) {
+    score -= 10;
+    omissions.push('Mortier de jointoiement ou joints souples d'étanchéité non précisés.');
+  }
+
+  // Check Legal Compliance
+  const siretEl = document.getElementById('sender-siret');
+  const clientEl = document.getElementById('client-name');
+  const siret = siretEl ? siretEl.value : '';
+  const clientName = clientEl ? clientEl.value : '';
+
+  if (siret && (siret.includes('SIRET') || siret.includes('Décennale'))) {
+    passes.push('Mentions légales SIRET & Assurance Décennale renseignées.');
+  } else {
+    score -= 10;
+    issues.push({
+      type: 'warning',
+      title: 'Mention d'Assurance Décennale recommandée',
+      detail: 'Indiquez le nom et le numéro de votre police d'assurance Décennale.'
+    });
+  }
+
+  if (clientName && clientName.trim().length > 2) {
+    passes.push('Client & Adresse du chantier bien identifiés.');
+  } else {
+    score -= 5;
+    issues.push({
+      type: 'warning',
+      title: 'Nom du client à renseigner',
+      detail: 'Saisissez le nom et l'adresse du destinataire pour valider la conformité juridique.'
+    });
+  }
+
+  score = Math.max(20, Math.min(100, score));
+
+  let scoreColor = '#10b981';
+  let scoreText = 'Excellent Devis Conforme & Rentable (Normes BTP Validées)';
+  if (score < 85) { scoreColor = '#f59e0b'; scoreText = 'Devis Bon - Quelques optimisations recommandées'; }
+  if (score < 65) { scoreColor = '#ef4444'; scoreText = 'Devis à réviser - Risques d'omission & de marge'; }
+
+  let html = `
+    <div class="p-3 rounded text-center card-bg-subtle mb-3" style="border: 1px solid ${scoreColor};">
+      <span class="audit-score-badge" style="color: ${scoreColor}; font-size: 24px; font-weight: 800;">
+        <i class="fa-solid fa-chart-line"></i> Score d'Audit BTP : ${score} / 100
+      </span>
+      <p class="mt-1" style="color: ${scoreColor}; font-weight: 600;">${scoreText}</p>
+    </div>
+  `;
+
+  if (omissions.length > 0) {
+    html += `
+      <div class="audit-card-item danger">
+        <strong style="color: #f59e0b;"><i class="fa-solid fa-triangle-exclamation"></i> Détection d'Omissions Prestations (Normes BTP & DTU) :</strong>
+        <ul class="mt-1 pl-3 small text-muted">
+          ${omissions.map(o => `<li>${o}</li>`).join('')}
+        </ul>
+      </div>`;
+  }
+
+  if (issues.length > 0) {
+    html += issues.map(iss => `
+      <div class="audit-card-item ${iss.type}">
+        <strong>${iss.title}</strong>
+        <p class="small text-muted mt-1">${iss.detail}</p>
+      </div>
+    `).join('');
+  }
+
+  if (passes.length > 0) {
+    html += `
+      <div class="audit-card-item success">
+        <strong style="color: #10b981;"><i class="fa-solid fa-circle-check"></i> Points Forts & Conformités Validées :</strong>
+        <ul class="mt-1 pl-3 small text-muted">
+          ${passes.map(p => `<li>${p}</li>`).join('')}
+        </ul>
+      </div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function compareQuotes() {
+  const container = document.getElementById('compare-results-container');
+  if (!container) return;
+
+  const priceA = parseFloat(document.getElementById('comp-a-price').value) || 0;
+  const priceB = parseFloat(document.getElementById('comp-b-price').value) || 0;
+  const detailsA = document.getElementById('comp-a-details').value || '';
+  const detailsB = document.getElementById('comp-b-details').value || '';
+
+  if (priceA <= 0 || priceB <= 0) {
+    container.innerHTML = `
+      <div class="p-3 rounded card-bg-subtle text-amber text-center">
+        Veuillez saisir le montant HT des 2 devis pour générer l'analyse comparative.
+      </div>`;
+    return;
+  }
+
+  const diff = priceA - priceB;
+  const diffPct = ((diff / priceB) * 100).toFixed(1);
+
+  let statusBadge = '';
+  let adviceText = '';
+
+  if (diff > 0) {
+    statusBadge = `<span class="diff-badge higher" style="background: rgba(245, 158, 11, 0.2); color: #f59e0b; padding: 6px 12px; border-radius: 20px; font-weight: 700;">+${diff.toFixed(2)} € (+${diffPct}%) par rapport au concurrent</span>`;
+    adviceText = `
+      <h5 class="text-amber mt-2"><i class="fa-solid fa-lightbulb"></i> Argumentaire Commercial & Explication de l'Écart (+${diff.toFixed(2)}€) :</h5>
+      <div class="card-bg-subtle p-3 rounded mt-2 border">
+        <p class="small text-muted">
+          Votre devis est supérieur de <strong>${diff.toFixed(2)} €</strong> (+${diffPct}%).<br><br>
+          <strong>Argumentaire pour convaincre le client :</strong><br>
+          • Exposez clairement votre garantie décennale et la qualité des mortiers-colles / finitions.<br>
+          • Montrez au client que le devis concurrent omet souvent des étapes cruciales (ragréage, étanchéité SPEC, nettoyage chantier).<br>
+          • Valorisez vos détails techniques : <em>${detailsA || 'Matériaux certifiés NF & finitions haut de gamme'}</em>.
+        </p>
+      </div>`;
+  } else if (diff < 0) {
+    const absDiff = Math.abs(diff);
+    const absPct = Math.abs(diffPct);
+    statusBadge = `<span class="diff-badge lower" style="background: rgba(16, 185, 129, 0.2); color: #10b981; padding: 6px 12px; border-radius: 20px; font-weight: 700;">-${absDiff.toFixed(2)} € (-${absPct}%) plus compétitif</span>`;
+    adviceText = `
+      <h5 class="text-emerald mt-2"><i class="fa-solid fa-circle-check"></i> Avantage Tarifaire Compétitif (-${absDiff.toFixed(2)}€) :</h5>
+      <div class="card-bg-subtle p-3 rounded mt-2 border">
+        <p class="small text-muted">
+          Votre offre est <strong>${absDiff.toFixed(2)} €</strong> plus avantageuse que celle du concurrent.<br><br>
+          <strong>Conseil :</strong> Vous disposez d'un excellent positionnement prix. Rasurez le client sur le fait que vos tarifs attractifs n'altèrent en rien la qualité professionnelle des finitions et des garanties BTP.
+        </p>
+      </div>`;
+  } else {
+    statusBadge = `<span class="diff-badge" style="background: rgba(99, 102, 241, 0.2); color: #6366f1; padding: 6px 12px; border-radius: 20px; font-weight: 700;">Prix Identiques (Écart 0.00 €)</span>`;
+    adviceText = `<p class="small text-muted mt-2">Les 2 devis affichent un tarif strictement identique. La différence se fera sur la rapidité d'exécution et les garanties d'assurance.</p>`;
+  }
+
+  container.innerHTML = `
+    <div class="p-3 rounded card-bg text-center border mt-2">
+      <div class="mb-2">${statusBadge}</div>
+      ${adviceText}
+    </div>
+  `;
+}
+
