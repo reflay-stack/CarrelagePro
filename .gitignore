@@ -1,0 +1,5 @@
+node_modules/
+.system_generated/
+scratch/
+artidevis_v9_full_34k.json
+*.log

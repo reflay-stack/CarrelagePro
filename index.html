@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CarrelagePro - Générateur de Devis & Calculateur de Chantiers Spécial Carreleurs</title>
+  <meta name="description" content="Application spécialisée pour Carreleurs : Calcul de surface m², métrés, quantité de colle/joints, devis conforme DTU 52.1 & catalogue spécial carrelage.">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="carrelage.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+
+  <!-- Header Navigation -->
+  <header class="carreleur-header">
+    <div class="header-container">
+      <div class="brand">
+        <div class="brand-icon tile-icon">
+          <i class="fa-solid fa-border-all"></i>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">Carrelage<span class="highlight">Pro</span></span>
+          <span class="brand-tagline">Logiciel & Calculateur Spécialisé Carreleurs (DTU 52.1)</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button class="btn btn-primary btn-sm pulse-glow" id="open-tile-cat-btn">
+          <i class="fa-solid fa-layer-group"></i> Catalogue Carrelage & Faïence (+45 Prestations)
+        </button>
+        <button class="btn btn-outline btn-sm" id="open-tile-calc-btn">
+          <i class="fa-solid fa-calculator"></i> Calculateur Matériaux & Pertes
+        </button>
+        <a href="../FacturaBTP/index.html" class="btn btn-secondary btn-sm">
+          <i class="fa-solid fa-house"></i> Retour FacturaBTP
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="app-main">
+    
+    <!-- Left Column: Form Editor & Calculators -->
+    <section class="editor-panel">
+
+      <!-- Calculateur de Métré, Sacs de Colle & Pertes (Carreleur Assistant) -->
+      <div class="form-card tile-calculator-card">
+        <div class="card-title text-amber">
+          <i class="fa-solid fa-calculator"></i> Assistant Calculateur de Surface & Quantités de Colle
+        </div>
+        <div class="form-grid grid-3">
+          <div class="form-group">
+            <label for="calc-length">Longueur de la pièce (m) :</label>
+            <input type="number" id="calc-length" placeholder="ex: 5.5" min="0" step="0.1">
+          </div>
+          <div class="form-group">
+            <label for="calc-width">Largeur de la pièce (m) :</label>
+            <input type="number" id="calc-width" placeholder="ex: 4.0" min="0" step="0.1">
+          </div>
+          <div class="form-group">
+            <label for="calc-pose-type">Type de Pose & Pertes (Chutes) :</label>
+            <select id="calc-pose-type">
+              <option value="5">Pose droite (+5% chutes)</option>
+              <option value="10">Pose décalée / au tiers (+10% chutes)</option>
+              <option value="12">Pose en diagonale (+12% chutes)</option>
+              <option value="15">Pose chevron / bâton rompu (+15% chutes)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="calc-results-box mt-3 p-3 rounded card-bg-subtle border">
+          <div class="form-grid grid-3 text-center">
+            <div>
+              <span class="calc-label">Surface Nette :</span>
+              <strong id="res-net-area" class="calc-val text-primary">0.00 m²</strong>
+            </div>
+            <div>
+              <span class="calc-label">Surface à Commander (Chutes inc.) :</span>
+              <strong id="res-gross-area" class="calc-val text-amber">0.00 m²</strong>
+            </div>
+            <div>
+              <span class="calc-label">Sacs de Colle 25kg (5kg/m²) :</span>
+              <strong id="res-glue-bags" class="calc-val text-emerald">0 sacs</strong>
+            </div>
+          </div>
+          <div class="text-right mt-2">
+            <button type="button" class="btn btn-sm btn-outline" id="inject-calc-to-devis">
+              <i class="fa-solid fa-plus"></i> Injecter cette surface dans le Devis
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Devis Information Form -->
+      <form id="devis-form">
+        <!-- General Document Settings -->
+        <div class="form-card">
+          <div class="card-title">
+            <i class="fa-solid fa-file-contract"></i> Informations du Devis Carreleur
+          </div>
+          <div class="form-grid grid-3">
+            <div class="form-group">
+              <label for="doc-number">N° de Devis</label>
+              <input type="text" id="doc-number" value="DEV-CAR-2026-001">
+            </div>
+            <div class="form-group">
+              <label for="doc-date">Date d'Établissement</label>
+              <input type="date" id="doc-date">
+            </div>
+            <div class="form-group">
+              <label for="doc-due">Validité du Devis</label>
+              <input type="date" id="doc-due">
+            </div>
+          </div>
+        </div>
+
+        <!-- Sender & Client Info -->
+        <div class="form-grid grid-2">
+          <div class="form-card">
+            <div class="card-title"><i class="fa-solid fa-user-gear"></i> Vos Coordonnées (Artisan Carreleur)</div>
+            <div class="form-group">
+              <label for="sender-name">Nom Entreprise / Carreleur</label>
+              <input type="text" id="sender-name" value="SNC CARRELAGE & FAÏENCE SUR-MESURE">
+            </div>
+            <div class="form-group">
+              <label for="sender-siret">N° SIRET & Qualification RGE/Décennale</label>
+              <input type="text" id="sender-siret" value="SIRET: 890 123 456 00012 • Garantie Décennale SMA BTP N°49201">
+            </div>
+            <div class="form-group">
+              <label for="sender-address">Adresse & Contact</label>
+              <textarea id="sender-address" rows="2">14 Rue des Métiers du Bâtiment, 75011 Paris&#10;Tél: 01 40 20 30 40 • Contact@carrelage-pro.fr</textarea>
+            </div>
+          </div>
+
+          <div class="form-card">
+            <div class="card-title"><i class="fa-solid fa-user"></i> Coordonnées Client / Maître d'Ouvrage</div>
+            <div class="form-group">
+              <label for="client-name">Nom du Client</label>
+              <input type="text" id="client-name" placeholder="ex: M. & Mme DUPONT">
+            </div>
+            <div class="form-group">
+              <label for="client-address">Adresse du Chantier de Pose</label>
+              <textarea id="client-address" rows="2" placeholder="ex: 28 Avenue de la République, 75011 Paris"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Prestations & Table Lines -->
+        <div class="form-card">
+          <div class="card-title d-flex justify-between align-center">
+            <span><i class="fa-solid fa-list-check"></i> Prestations de Carrelage & Faïence</span>
+            <button type="button" class="btn btn-sm btn-primary" id="open-cat-direct-btn">
+              <i class="fa-solid fa-book-open"></i> Choisir dans le Catalogue Carrelage
+            </button>
+          </div>
+
+          <div class="table-responsive">
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th style="width: 45%;">Désignation des Travaux de Pose (Conforme DTU 52.1)</th>
+                  <th style="width: 15%;">Quantité (m² / u / ml)</th>
+                  <th style="width: 18%;">Prix HT (€)</th>
+                  <th style="width: 14%;">TVA %</th>
+                  <th style="width: 8%;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="items-body">
+                <!-- Injected dynamically -->
+              </tbody>
+            </table>
+          </div>
+
+          <button type="button" class="btn btn-outline btn-sm mt-3" id="add-tile-line-btn">
+            <i class="fa-solid fa-plus"></i> Ajouter une ligne de prestation manuelle
+          </button>
+        </div>
+
+        <!-- Totals & Payment Clauses -->
+        <div class="form-card">
+          <div class="card-title"><i class="fa-solid fa-file-invoice-dollar"></i> Conditions de Règlement Chantier</div>
+          <div class="form-grid grid-2">
+            <div class="form-group">
+              <label for="payment-terms">Acompte à la commande (Standard BTP) :</label>
+              <select id="acompte-select">
+                <option value="30">30% à la commande (Acompte Démarrage)</option>
+                <option value="40">40% à la commande</option>
+                <option value="50">50% à la commande</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="legal-notes">Clauses de Réserve de Propriété & DTU 52.1</label>
+              <textarea id="legal-notes" rows="2">Devis valable 30 jours. Les matériaux restent la propriété de l'entreprise jusqu'au paiement complet. Travaux exécutés conformément aux règles de l'art du DTU 52.1 et DTU 52.2.</textarea>
+            </div>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <!-- Right Column: Live Document Preview & Actions -->
+    <section class="preview-panel">
+      <div class="preview-sticky-bar">
+        <div class="preview-actions">
+          <button class="btn btn-primary" id="download-pdf-btn">
+            <i class="fa-solid fa-file-pdf"></i> Télécharger le Devis PDF
+          </button>
+          <button class="btn btn-outline" id="print-btn">
+            <i class="fa-solid fa-print"></i> Imprimer
+          </button>
+        </div>
+
+        <!-- Preview Document Paper -->
+        <div class="invoice-paper free-watermark-active" id="invoice-paper">
+          <div class="paper-watermark">CarrelagePro • Version Gratuite</div>
+
+          <div class="paper-header d-flex justify-between">
+            <div class="paper-brand">
+              <h2>SNC CARRELAGE & FAÏENCE</h2>
+              <p class="tagline">Spécialiste Pose de Sols, Mosaïque & Travertin</p>
+              <p id="prev-sender-siret" class="small text-muted">SIRET: 890 123 456 00012</p>
+              <p id="prev-sender-address" class="small"></p>
+            </div>
+            <div class="paper-doc-info text-right">
+              <h1 id="prev-doc-type">DEVIS CARRELEUR</h1>
+              <p id="prev-doc-number" class="doc-num">N° DEV-CAR-2026-001</p>
+              <p class="small">Date : <span id="prev-doc-date"></span></p>
+              <p class="small">Validité : <span id="prev-doc-due"></span></p>
+            </div>
+          </div>
+
+          <hr class="paper-divider">
+
+          <div class="paper-client-box p-3 rounded mb-3">
+            <span class="label">DESTINATAIRE / CHANTIER DE POSE :</span>
+            <h4 id="prev-client-name" class="m-0">Client Chantier</h4>
+            <p id="prev-client-address" class="m-0 small"></p>
+          </div>
+
+          <!-- Items Table Preview -->
+          <table class="paper-table">
+            <thead>
+              <tr>
+                <th class="text-left">Désignation des Travaux (Normes DTU 52.1)</th>
+                <th class="text-center">Qté</th>
+                <th class="text-right">Prix Unit HT</th>
+                <th class="text-center">TVA</th>
+                <th class="text-right">Total HT</th>
+              </tr>
+            </thead>
+            <tbody id="prev-items-body">
+              <!-- Injected dynamically -->
+            </tbody>
+          </table>
+
+          <!-- Totals Breakdown -->
+          <div class="paper-totals-container d-flex justify-between mt-4">
+            <div class="paper-notes">
+              <p class="notes-title">Conditions & Garanties :</p>
+              <p id="prev-legal-notes" class="small text-muted"></p>
+            </div>
+            <div class="paper-totals-box">
+              <div class="total-row">
+                <span>Total HT :</span>
+                <span id="prev-subtotal">0.00 €</span>
+              </div>
+              <div class="total-row">
+                <span>TVA (10%) :</span>
+                <span id="prev-tva">0.00 €</span>
+              </div>
+              <div class="total-row highlight-row">
+                <span>TOTAL TTC :</span>
+                <span id="prev-total-ttc">0.00 €</span>
+              </div>
+              <div class="total-row deposit-row">
+                <span>Acompte à la commande (30%) :</span>
+                <span id="prev-deposit">0.00 €</span>
+              </div>
+              <div class="total-row final-due">
+                <span>NET À PAYER CHANTIER :</span>
+                <span id="prev-net-payable">0.00 €</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Signature Zone -->
+          <div class="signature-section mt-4">
+            <div class="signature-box text-center">
+              <p class="small"><strong>Bon pour accord et commande des travaux de carrelage :</strong><br><small>Date et signature précédées de la mention "Bon pour accord"</small></p>
+              <div class="signature-line mt-4"></div>
+            </div>
+          </div>
+
+          <div class="paper-footer text-center mt-4">
+            <p class="small text-muted">CarrelagePro • Document officiel conforme au DTU 52.1 & Code de la Construction</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal Catalogue Exclusif Carrelage (+45 Prestations Spécialisées) -->
+  <div class="modal-backdrop" id="tile-cat-modal" style="display: none;">
+    <div class="modal-card modal-lg">
+      <button class="modal-close" id="close-tile-cat-modal">&times;</button>
+      <div class="modal-header">
+        <div class="crown-icon text-amber"><i class="fa-solid fa-border-all"></i></div>
+        <h3>Catalogue Spécialisé Carrelage, Faïence & Sols (+45 Prestations)</h3>
+        <p>Tarifs de référence et nomenclatures professionnelles des carreleurs : Pose grands formats, mosaïque, travertin, étanchéité SPEC, chappes & ragréage.</p>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="form-group search-group mt-3">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input type="text" id="tile-search-input" placeholder="Rechercher une prestation carreleur (ex: 60x60, XXL, chevron, mosaïque, travertin, SPEC, plinthe, ragréage...)">
+      </div>
+
+      <!-- Tile Filter Pills -->
+      <div class="category-filter-pills mt-2">
+        <button class="tile-filter-btn active" data-sub="all">Toutes les prestations carrelage</button>
+        <button class="tile-filter-btn" data-sub="sol">Sols Intérieurs</button>
+        <button class="tile-filter-btn" data-sub="mur">Faïence Murale & SDB</button>
+        <button class="tile-filter-btn" data-sub="ext">Extérieurs & Terrasses</button>
+        <button class="tile-filter-btn" data-sub="prepa">Chape, Ragréage & SPEC</button>
+      </div>
+
+      <!-- Tile Grid -->
+      <div class="catalogue-grid mt-3" id="tile-grid-container">
+        <!-- Injected dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <script src="carrelage.js"></script>
+</body>
+</html>
