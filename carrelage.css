@@ -495,3 +495,156 @@ input:focus, select:focus, textarea:focus {
   margin-bottom: 12px;
   line-height: 1.4;
 }
+
+
+
+/* ==========================================================================
+   MOBILE & TOUCH UX OPTIMIZATIONS (Smartphones & Tablets < 768px)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  /* Prevent iOS input auto-zoom by enforcing 16px font-size */
+  input, select, textarea {
+    font-size: 16px !important;
+    min-height: 46px;
+  }
+
+  body {
+    padding-bottom: 90px; /* Space for sticky mobile bottom navigation */
+  }
+
+  /* Header Layout */
+  .carreleur-header {
+    padding: 10px 14px;
+  }
+
+  .header-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .brand {
+    justify-content: center;
+  }
+
+  .header-actions {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .header-actions .btn {
+    flex: 1 1 calc(50% - 6px);
+    justify-content: center;
+    font-size: 11px;
+    padding: 8px 10px;
+  }
+
+  /* Main Grid Stack */
+  .app-main {
+    grid-template-columns: 1fr;
+    margin: 12px auto;
+    padding: 0 10px;
+    gap: 16px;
+  }
+
+  /* Forms & Grids */
+  .grid-2, .grid-3 {
+    grid-template-columns: 1fr;
+  }
+
+  .form-card {
+    padding: 14px;
+    border-radius: 10px;
+  }
+
+  /* Calculator Box */
+  .calc-results-box .grid-3 {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .calc-val {
+    font-size: 20px;
+  }
+
+  /* Table Mobile Touch Optimization */
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 6px;
+  }
+
+  .items-table {
+    min-width: 550px;
+  }
+
+  /* Live Preview Paper Mobile Scaling */
+  .preview-sticky-bar {
+    position: static;
+  }
+
+  .invoice-paper {
+    padding: 18px 12px;
+    font-size: 12px;
+  }
+
+  .paper-header {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .paper-doc-info {
+    text-align: left !important;
+  }
+
+  .paper-totals-container {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .paper-totals-box {
+    min-width: 100%;
+  }
+
+  /* Modal Responsive Touch Fit */
+  .modal-card {
+    width: 96vw;
+    padding: 18px 14px;
+    max-height: 94vh;
+  }
+
+  .catalogue-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Mobile Bottom Quick Action Bar */
+  .mobile-bottom-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #1a222d;
+    border-top: 1px solid #2e3c4e;
+    padding: 10px 14px;
+    display: flex;
+    gap: 10px;
+    z-index: 999;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+  }
+
+  .mobile-bottom-bar .btn {
+    flex: 1;
+    justify-content: center;
+    font-size: 13px;
+    padding: 12px 10px;
+  }
+}
+
+@media (min-width: 769px) {
+  .mobile-bottom-bar {
+    display: none !important;
+  }
+}
